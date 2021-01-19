@@ -1,0 +1,12 @@
+# C extensions
+*.so
+
+# build dir
+build/
+
+#
+__pycache__/
+
+# src
+/src/__pycache__/
+/src/*.html
