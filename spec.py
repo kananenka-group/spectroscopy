@@ -22,7 +22,7 @@ def run(input_file):
    print ("*                                                             *")
    print ("*                     SPECTROSCOPY CODE                       *")
    print ("*                                                             *")
-   print ("*                     VERSION: 08/30/2020                     *")
+   print ("*                     VERSION: 01/20/2021                     *")
    print ("*                                                             *")
    print ("***************************************************************")   
 
@@ -76,14 +76,17 @@ def run(input_file):
    # load gromacs files: need both xtc and gro files
    #
    #----------------------------------------------------------------
-   xtc_file = j['simulation']['xtc_file']
-   gro_file = j['simulation']['gro_file']  
-   xfile = Path(xtc_file)
-   gfile = Path(gro_file)
-   if xfile.is_file():
-      if gfile.is_file():
-         print (" xtc file: %s "%(xtc_file))
-         print (" gro file: %s "%(gro_file))
+   if j['simulation']['system'] == 'electrostatics':
+      el_input_file = j['simulation']['electrostatics.inp'] 
+   else:
+      xtc_file = j['simulation']['xtc_file']
+      gro_file = j['simulation']['gro_file']  
+      xfile = Path(xtc_file)
+      gfile = Path(gro_file)
+      if xfile.is_file():
+         if gfile.is_file():
+            print (" xtc file: %s "%(xtc_file))
+            print (" gro file: %s "%(gro_file))
          # no longer loading the entire trajectory at once
          # will pre-load segments for efficient memory handling
          # 
@@ -92,31 +95,32 @@ def run(input_file):
          #print (" The units of length are assumed to be nm. ")
          #traj.xyz *= 10.0 # to convert to A
          #traj.unitcell_lengths *= 10.0 # to convert to A
+         else:
+            print (" gro file %s is not found! "%(gfile))
+            sys.exit()
       else:
-         print (" gro file %s is not found! "%(gfile))
+         print (" xtc file %s is not found! "%(xfile)) 
          sys.exit()
-   else:
-      print (" xtc file %s is not found! "%(xfile)) 
-      sys.exit()
 
    #----------------------------------------------------------------
    #
    # Perform various checks here 
    # 1. check if we have trajectory that is long enough:
    #
-   try:
-      x = j['simulation']['nsegments']
-   except KeyError:
-      print (" Error! 'nsegments' is not set under 'simulation' ",flush=True)
-      sys.exit()
-   print (" Number of trajectory segments: %d "%(int(j['simulation']['nsegments'])),flush=True)
+   j['simulation']['system'] != 'electrostatics':
+      try:
+         x = j['simulation']['nsegments']
+      except KeyError:
+         print (" Error! 'nsegments' is not set under 'simulation' ",flush=True)
+         sys.exit()
+      print (" Number of trajectory segments: %d "%(int(j['simulation']['nsegments'])),flush=True)
 
-   if j['simulation']['nsegments'] > 1:
-      print (" Segments will be separated by: %d timesteps "%(int(j['simulation']['time_sep']/j['simulation']['dt'])),flush=True)
+      if j['simulation']['nsegments'] > 1:
+         print (" Segments will be separated by: %d timesteps "%(int(j['simulation']['time_sep']/j['simulation']['dt'])),flush=True)
 
-   sim_time = j['simulation']['nsegments']*(j['simulation']['time_sep']
-            + j['simulation']['correlation_time'])-j['simulation']['time_sep']
-   print (" Length of trajectory needed: %d frames "%(int(sim_time/j['simulation']['dt'])))
+      sim_time = j['simulation']['nsegments']*(j['simulation']['time_sep']
+               + j['simulation']['correlation_time'])-j['simulation']['time_sep']
+      print (" Length of trajectory needed: %d frames "%(int(sim_time/j['simulation']['dt'])))
    #print (" Length of trajectory provided: ",traj.n_frames)
 
    # this will need to be changed....
@@ -125,17 +129,17 @@ def run(input_file):
    # check dt from traj object and input
 
    # - 
-   try:
-      rlxt = j['spectroscopy']['rlx_time']
-   except KeyError:
-      j.update({"spectroscopy" : {"rlx_time" : 0.0}})
-      print (" WARNING: Relaxation time is not provided. Setting it to zero!")
+      try:
+         rlxt = j['spectroscopy']['rlx_time']
+      except KeyError:
+         j.update({"spectroscopy" : {"rlx_time" : 0.0}})
+         print (" WARNING: Relaxation time is not provided. Setting it to zero!")
 
-   try:
-      nfft = j['simulation']['nfft']
-   except KeyError:
-      j.update({"simulation" : {"nfft" : 16384}})
-      print (" Number of zeros padded in Fourier transforms (simulation, nfft): 16384")
+      try:
+         nfft = j['simulation']['nfft']
+      except KeyError:
+         j.update({"simulation" : {"nfft" : 16384}})
+         print (" Number of zeros padded in Fourier transforms (simulation, nfft): 16384")
 
    #----------------------------------------------------------------
    #
@@ -160,20 +164,23 @@ def run(input_file):
    # Here we pick the right module and perform simulation
    #
    #----------------------------------------------------------------
-   if j['simulation']['system'] == "water":
+   if j['simulation']['system'] != 'electrostatics':
+      if j['simulation']['system'] == "water":
    
-      try:
-         x = j["models"]["water_model"]
-         # check water model here
-      except KeyError:
-         print (" Error! Water model is not defined !")
-         sys.exit()
+         try:
+            x = j["models"]["water_model"]
+            # check water model here
+         except KeyError:
+            print (" Error! Water model is not defined !")
+            sys.exit()
 
-      # if all is good, run water module
-      water.run(j,xtc_file,gro_file)
+         # if all is good, run water module
+         water.run(j,xtc_file,gro_file)
+      else:
+         print (" Error. Cannot recognize simulation system: %s "%j['simulation']['system'])
+         sys.exit()
    else:
-      print (" Error. Cannot recognize simulation system: %s "%j['simulation']['system'])
-      sys.exit()
+       print (" Ready to run electrostatics job.")
 
    #----------------------------------------------------------------
    #
