@@ -107,7 +107,7 @@ def run(input_file):
    # Perform various checks here 
    # 1. check if we have trajectory that is long enough:
    #
-   j['simulation']['system'] != 'electrostatics':
+   if j['simulation']['system'] != 'electrostatics':
       try:
          x = j['simulation']['nsegments']
       except KeyError:

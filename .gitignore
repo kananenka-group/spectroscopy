@@ -10,3 +10,6 @@ __pycache__/
 # src
 /src/__pycache__/
 /src/*.html
+
+#setup scripts
+*.sh
