@@ -1,0 +1,12 @@
+{
+   "simulation" : {
+      "title"  : "test",
+      "system" : "electrostatics",
+      "electrostatics_data" : "elst.dat"
+   },
+
+   "parallel" : {
+      "num_threads" : 40
+   }
+
+}

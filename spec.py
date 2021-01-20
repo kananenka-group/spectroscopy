@@ -77,7 +77,7 @@ def run(input_file):
    #
    #----------------------------------------------------------------
    if j['simulation']['system'] == 'electrostatics':
-      el_input_file = j['simulation']['electrostatics.inp'] 
+      el_input_file = j['simulation']['electrostatics_data'] 
    else:
       xtc_file = j['simulation']['xtc_file']
       gro_file = j['simulation']['gro_file']  
